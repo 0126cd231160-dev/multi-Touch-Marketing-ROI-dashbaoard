@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Attribution Modeling Suite</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+         :root {
+            --bg: #0f172a;
+            --panel: #1e293b;
+            --accent: #3b82f6;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --border: #334155;
+            --green: #10b981;
+            --red: #f43f5e;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            padding-bottom: 5rem;
+        }
+        
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--panel);
+            padding: 1.25rem 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--accent);
+        }
+        
+        .version-tag {
+            font-size: 0.75rem;
+            color: var(--muted);
+            font-weight: 400;
+            vertical-align: middle;
+        }
+        
+        .controls select {
+            padding: 0.6rem 1.2rem;
+            font-size: 0.95rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
+            cursor: pointer;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 2.5rem auto;
+            padding: 0 1.5rem;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+        
+        .card {
+            background-color: var(--panel);
+            padding: 1.75rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent);
+            border-radius: 12px 0 0 12px;
+        }
+        
+        .card h4 {
+            color: var(--muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.05em;
+        }
+        
+        .card p {
+            font-size: 2.25rem;
+            font-weight: 700;
+        }
+        
+        .layout-split {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            margin-bottom: 2.5rem;
+        }
+        
+        @media (min-width: 1024px) {
+            .layout-split {
+                grid-template-columns: 1.1fr 0.9fr;
+            }
+        }
+        
+        .panel {
+            background-color: var(--panel);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+        
+        .panel h3 {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            border-left: 3px solid var(--accent);
+            padding-left: 0.5rem;
+        }
+        
+        .panel-desc {
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .filter-section {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+            background: #111827;
+            padding: 0.75rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+        
+        .filter-headline {
+            font-size: 0.85rem;
+            color: var(--muted);
+            font-weight: 700;
+            align-self: center;
+            margin-right: 0.5rem;
+        }
+        
+        .filter-tag {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .wrapper {
+            position: relative;
+            height: 350px;
+            width: 100%;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        
+        th,
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.95rem;
+        }
+        
+        th {
+            background-color: #111827;
+            color: var(--muted);
+            font-weight: 600;
+        }
+        
+        tr:hover td {
+            background-color: #334155;
+        }
+        
+        .tag-green {
+            color: var(--green);
+            font-weight: 700;
+        }
+        
+        .tag-red {
+            color: var(--red);
+            font-weight: 700;
+        }
+        
+        .simulator-form {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        
+        @media (min-width: 768px) {
+            .simulator-form {
+                grid-template-columns: 2fr 1fr 1fr;
+                align-items: end;
+            }
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .form-group label {
+            font-size: 0.85rem;
+            color: var(--muted);
+            font-weight: 600;
+        }
+        
+        .form-group input,
+        .form-group select {
+            padding: 0.65rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
+            outline: none;
+        }
+        
+        .form-group select[multiple] {
+            height: 100px;
+        }
+        
+        .btn {
+            background-color: var(--accent);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .btn:hover {
+            background-color: #2563eb;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="navbar">
+        <div class="brand">Attribution.AI <span class="version-tag">Pro v2.0</span></div>
+        <div class="controls">
+            <label for="modelSelect">Attribution Model Matrix: </label>
+            <select id="modelSelect">
+                <option value="linear">Linear Model (Equal Fractional Split)</option>
+                <option value="first-touch">First-Touch Model (Top-Funnel Discovery)</option>
+                <option value="last-touch">Last-Touch Model (Bottom-Funnel Conversion)</option>
+                <option value="position-based">Position-Based Model (U-Shaped 40/20/40)</option>
+            </select>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="metrics-grid">
+            <div class="card">
+                <h4>Portfolio Ad Investment</h4>
+                <p id="costMetric">$0</p>
+            </div>
+            <div class="card">
+                <h4>Fractional Attributed Revenue</h4>
+                <p id="revMetric">$0</p>
+            </div>
+            <div class="card">
+                <h4>Blended Portfolio ROAS</h4>
+                <p id="roasMetric">0.00x</p>
+            </div>
+        </section>
+
+        <section class="layout-split">
+            <div class="panel">
+                <h3>Analytical Yield Matrix Comparison</h3>
+                <div class="filter-section" id="channelFilters">
+                    <span class="filter-headline">Isolate Channels:</span>
+                </div>
+                <div class="wrapper"><canvas id="advancedChart"></canvas></div>
+            </div>
+
+            <div class="panel">
+                <h3>Channel Data & Multi-Touch Insights Matrix</h3>
+                <table id="performanceTable">
+                    <thead>
+                        <tr>
+                            <th>Marketing Channel</th>
+                            <th>Spend Cost</th>
+                            <th>Attributed Revenue</th>
+                            <th>Assisted Conversions</th>
+                            <th>ROAS Yield</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h3>Real-Time Customer Conversion Journey Simulator</h3>
+            <p class="panel-desc">Select a specific sequencing pattern of multi-channel touches to test how fractional distribution formulas adjust dynamically across your balance sheet metrics.</p>
+            <form id="simulatorForm" class="simulator-form">
+                <div class="form-group">
+                    <label>Simulated Journey Touchpoint Chain (Hold Ctrl/Cmd to select multiple channels in order)</label>
+                    <select id="simPath" multiple required>
+                        <option value="Google Ads">Google Ads</option>
+                        <option value="Facebook Ads">Facebook Ads</option>
+                        <option value="Email">Email</option>
+                        <option value="SEO">SEO</option>
+                        <option value="Influencer">Influencer</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="simRevenue">Checkout Revenue Generated Value ($)</label>
+                    <input type="number" id="simRevenue" placeholder="e.g. 1500" min="1" required />
+                </div>
+                <button type="submit" class="btn">Stream Path to Pipeline Engine</button>
+            </form>
+        </section>
+    </main>
+
+    <script>
+        let mainChart = null;
+        let activeChannelsFilter = ['Google Ads', 'Facebook Ads', 'Email', 'SEO', 'Influencer'];
+        let currentCachedData = [];
+
+        async function syncAnalyticsEngine() {
+            const activeModel = document.getElementById('modelSelect').value;
+            try {
+                const fetchUri = '/api/attribution?model=' + activeModel;
+                const networkResponse = await fetch(fetchUri);
+                currentCachedData = await networkResponse.json();
+
+                if (document.getElementById('channelFilters').children.length <= 1) {
+                    buildInteractiveFilters(currentCachedData);
+                }
+
+                renderDashboardView();
+            } catch (networkError) {
+                console.error("Dashboard out of sync error:", networkError);
+            }
+        }
+
+        function buildInteractiveFilters(data) {
+            const filterBox = document.getElementById('channelFilters');
+            data.forEach(item => {
+                const UIElementLabel = document.createElement('label');
+                UIElementLabel.className = 'filter-tag';
+                UIElementLabel.innerHTML = '<input type="checkbox" checked value="' + item.channel + '"> ' + item.channel;
+
+                UIElementLabel.querySelector('input').addEventListener('change', (event) => {
+                    if (event.target.checked) {
+                        activeChannelsFilter.push(event.target.value);
+                    } else {
+                        activeChannelsFilter = activeChannelsFilter.filter(ch => ch !== event.target.value);
+                    }
+                    renderDashboardView();
+                });
+                filterBox.appendChild(UIElementLabel);
+            });
+        }
+
+        function renderDashboardView() {
+            const workingSet = currentCachedData.filter(item => activeChannelsFilter.includes(item.channel));
+
+            let spendSum = 0,
+                revenueSum = 0;
+            workingSet.forEach(obj => {
+                spendSum += obj.cost;
+                revenueSum += obj.revenue;
+            });
+
+            document.getElementById('costMetric').innerText = '$' + spendSum.toLocaleString();
+            document.getElementById('revMetric').innerText = '$' + revenueSum.toLocaleString();
+            document.getElementById('roasMetric').innerText = (spendSum > 0 ? (revenueSum / spendSum).toFixed(2) : '0.00') + 'x';
+
+            const tableBody = document.querySelector('#performanceTable tbody');
+            tableBody.innerHTML = '';
+            workingSet.forEach(row => {
+                const deltaThemeColorClass = row.roas >= 1.5 ? 'tag-green' : 'tag-red';
+                tableBody.innerHTML += '<tr>' +
+                    '<td><strong>' + row.channel + '</strong></td>' +
+                    '<td>$' + row.cost.toLocaleString() + '</td>' +
+                    '<td>$' + row.revenue.toLocaleString() + '</td>' +
+                    '<td>' + row.assistCount + ' loops</td>' +
+                    '<td class="' + deltaThemeColorClass + '">' + row.roas + 'x</td>' +
+                    '</tr>';
+            });
+
+            const canvasContext = document.getElementById('advancedChart').getContext('2d');
+            if (mainChart) {
+                mainChart.destroy();
+            }
+
+            mainChart = new Chart(canvasContext, {
+                type: 'bar',
+                data: {
+                    labels: workingSet.map(i => i.channel),
+                    datasets: [{
+                        label: 'Calculated Revenue Allocations ($)',
+                        data: workingSet.map(i => i.revenue),
+                        backgroundColor: '#3b82f6'
+                    }, {
+                        label: 'Allocated Capital Spend ($)',
+                        data: workingSet.map(i => i.cost),
+                        backgroundColor: '#475569'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            grid: {
+                                color: '#334155'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#f8fafc'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function postSimulatedConversion(event) {
+            event.preventDefault();
+            const sequenceSelector = document.getElementById('simPath');
+            const pathArray = Array.from(sequenceSelector.selectedOptions).map(opt => opt.value);
+            const estimatedValue = document.getElementById('simRevenue').value;
+
+            if (!pathArray.length) {
+                alert('Specify at least 1 multi-touch channel link.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/simulate-conversion', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        path: pathArray,
+                        revenue: estimatedValue
+                    })
+                });
+
+                if (response.ok) {
+                    alert('Journey Data Logged! Recalculating channel returns...');
+                    document.getElementById('simulatorForm').reset();
+                    syncAnalyticsEngine();
+                }
+            } catch (err) {
+                console.error("Transmission error on client transaction simulation:", err);
+            }
+        }
+
+        document.getElementById('modelSelect').addEventListener('change', syncAnalyticsEngine);
+        document.getElementById('simulatorForm').addEventListener('submit', postSimulatedConversion);
+        window.addEventListener('load', syncAnalyticsEngine);
+    </script>
+</body>
+
+</html>
